@@ -1,8 +1,25 @@
-import sys
+import sys, os
 import math
 from PyQt5.QtCore import Qt, QTimer, QRect, QPoint
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QIcon
+
+def calculate_seconds_shutdown_time(angle) -> int:
+    # Get the slider value and map it to seconds
+    # example: 45 degree = 15 minutes and modulo 60 to get the remainder seconds
+    timer_seconds = ((angle * 60) // 6)
+    timer_mod = timer_seconds % 100
+    timer_seconds = timer_seconds - timer_mod
+    timer_seconds = [0, timer_seconds][timer_seconds > 0]
+    return int(timer_seconds)
+
+def convert_seconds_to_minutes(seconds) -> int:
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return int(minutes)
+
+def get_minutes_from_shutdown_time(angle) -> int:
+    return convert_seconds_to_minutes(calculate_seconds_shutdown_time(angle))    
 
 
 class CircularSlider(QWidget):
@@ -10,12 +27,13 @@ class CircularSlider(QWidget):
         super().__init__()
 
         self.setWindowTitle("Circular Slider")
-        self.setGeometry(100, 100, 300, 300)
+        self.setGeometry(0, 0, 400, 300)
+
 
         # Initialize Slider Variables
         self.value = 0  # Current slider value (0 to 360 degrees)
         self.radius = 80  # Adjusted radius of the circular slider
-        self.center = QPoint(self.width() // 2, self.height() // 2)  # Center of the circle
+        self.center = QPoint(int(self.width() * .47), int(self.height() * .31))  # Center of the circle
         self.start_angle = 90  # The angle to start from (top)
 
     def paintEvent(self, event):
@@ -28,7 +46,7 @@ class CircularSlider(QWidget):
                             int(2 * self.radius), int(2 * self.radius))
 
         # Draw the filled part based on value
-        painter.setPen(QPen(QColor(50, 150, 255), 10))  # Blue color for the filled part
+        painter.setPen(QPen(QColor(150, 150, 255), 10))  # Blue color for the filled part
         painter.drawArc(QRect(int(self.center.x() - self.radius), int(self.center.y() - self.radius),
                               int(2 * self.radius), int(2 * self.radius)),
                          int(self.start_angle * 16), int(-self.value * 16))
@@ -37,13 +55,21 @@ class CircularSlider(QWidget):
         angle = (self.start_angle - self.value) * (math.pi / 180)  # Convert to radians
         x = self.center.x() + self.radius * math.cos(angle)
         y = self.center.y() - self.radius * math.sin(angle)
-        painter.setBrush(QColor(255, 0, 0))  # Red handle
+        
+        # Draw the handle point color
+        # painter.setBrush(QColor(255, 0, 0))
         painter.drawEllipse(QPoint(int(x), int(y)), 10, 10)  # Handle
 
         # Draw the value inside the circular slider
-        painter.setPen(QPen(QColor(0, 0, 0)))  # Black text color
-        painter.setFont(self.font())  # Use the default font
-        painter.drawText(self.center.x() - 20, self.center.y() + 10, f"{int(self.value)}°")  # Draw the value
+        painter.setPen(QPen(QColor(150, 150, 255)))  # Black text color
+        # painter.setFont(self.font())  # Use the default font
+        painter.setFont(QFont("Fira Code", 22))  # Use the default font
+        
+        
+        ### draw value in the center of the circle
+        # painter.drawText(self.center.x() - 20, self.center.y() + 10, f"{int(self.value)}°")  # Draw the value
+        painter.drawText(self.center.x() - 5, self.center.y() + 10, f"{get_minutes_from_shutdown_time(self.value)}")  # Draw the value
+        
 
     def mousePressEvent(self, event):
         if self.is_inside_circle(event.pos()):
@@ -81,36 +107,32 @@ class TimerApp(QWidget):
 
         self.setWindowTitle("Shutdown Timer")
         self.screen = QApplication.primaryScreen()
-        self.width, self.height = 500, 800
+        self.width, self.height = 400, 500
         # set initial window size to middle of the screen x, y
         self.x = (self.screen.size().width() - self.width) // 2
         self.y = (self.screen.size().height() - self.height) * .4
-        self.setGeometry(self.x, self.y, self.width, self.height)
-        
+        self.setGeometry(int(self.x), int(self.y), int(self.width), int(self.height))
         self.setFixedSize(self.width, self.height)
         self.setWindowIcon(QIcon("asset/icon/sleep_score.svg"))
     
 
         # Create UI Elements
         self.layout = QVBoxLayout()
-
-        # Timer Input Fields (optional if you want direct input)
-        self.label = QLabel("Set Timer (hh:mm:ss):", self)
-        self.layout.addWidget(self.label)
-
-        self.time_input = QLineEdit(self)
-        self.time_input.setPlaceholderText("Enter time (hh:mm:ss) or use slider")
-        self.layout.addWidget(self.time_input)
-
-        # Add a spacer to create some space between the input and the circular slider
-        self.layout.addSpacing(20)
-
+        self.layout.addSpacing(15)
+        
         # Create Circular Slider
         self.circular_slider = CircularSlider()
         self.layout.addWidget(self.circular_slider)
-
         # Add a spacer between the slider and the buttons
+        # self.layout.addSpacing(20)
+
+        # Timer Input Fields (optional if you want direct input)
+        self.time_input = QLineEdit(self)
+        self.time_input.setPlaceholderText("Enter time in [minutes] or use slider")
+        self.layout.addWidget(self.time_input)
+        # Add a spacer to create some space between the input and the circular slider
         self.layout.addSpacing(20)
+
 
         # Start and Reset buttons
         self.start_button = QPushButton("Start Timer", self)
@@ -137,11 +159,17 @@ class TimerApp(QWidget):
         self.timer_seconds = 0
         self.is_running = False
 
+
     def start_timer(self):
         if not self.is_running:
             # Get the slider value and map it to seconds
             slider_value = self.circular_slider.get_value()
-            self.timer_seconds = slider_value * 10  # Example: 1 degree = 10 seconds
+            # example: 45 degree = 15 minutes and modulo 60 to get the remainder seconds
+            self.timer_seconds = ((slider_value * 60) // 6)
+            self.timer_mod = self.timer_seconds % 100
+            self.timer_seconds = self.timer_seconds - self.timer_mod
+            
+            self.timer_seconds = [0, self.timer_seconds][self.timer_seconds > 0]
 
             # Disable user input and adjust the start button state
             self.time_input.setDisabled(True)
@@ -149,30 +177,47 @@ class TimerApp(QWidget):
             self.start_button.setText("Timer Running...")
             self.is_running = True
 
-            # Start the countdown
-            self.countdown_timer.start(1000)  # 1 second intervals
+            # Start the countdown0
+            # self.countdown_timer.start(100)  # 1 second intervals
+            
+            # disable start button when timer is running
+            self.start_button.setDisabled(True)
+            
+            shutdown_command = f"shutdown -s -t {int(self.timer_seconds)}"
+            print("execute cmd: " + shutdown_command)
+            os.system(shutdown_command)
+            
         else:
             pass
 
+
     def update_timer(self):
-        if self.timer_seconds > 0:
+        # real-time countdown
+        if self.timer_seconds > 0 and self.is_running:
             self.timer_seconds -= 1
             hours, remainder = divmod(self.timer_seconds, 3600)
             minutes, seconds = divmod(remainder, 60)
-            self.timer_display.setText(f"Time Left: {hours:02}:{minutes:02}:{seconds:02}")
+            self.timer_display.setText(f"Time Left: {hours:02}h:{minutes:02}m:{seconds:02}s")
+        
+        # when timer is up
         else:
             self.countdown_timer.stop()
             self.timer_display.setText("Time's up!")
             self.start_button.setText("Start Timer")
             self.reset_timer()
 
+
     def reset_timer(self):
         self.is_running = False
+        os.system("shutdown -a")
         self.time_input.setEnabled(True)
         self.circular_slider.setEnabled(True)
         self.time_input.clear()
         self.timer_display.setText("Time Left: 00:00:00")
         self.start_button.setText("Start Timer")
+        
+        # enable start button when timer is reset
+        self.start_button.setDisabled(False)
         
         
         
