@@ -29,7 +29,6 @@ class CircularSlider(QWidget):
         self.setWindowTitle("Circular Slider")
         self.setGeometry(0, 0, 400, 300)
 
-
         # Initialize Slider Variables
         self.value = 0  # Current slider value (0 to 360 degrees)
         self.radius = 80  # Adjusted radius of the circular slider
@@ -57,18 +56,16 @@ class CircularSlider(QWidget):
         y = self.center.y() - self.radius * math.sin(angle)
         
         # Draw the handle point color
-        # painter.setBrush(QColor(255, 0, 0))
-        painter.drawEllipse(QPoint(int(x), int(y)), 10, 10)  # Handle
+        painter.setBrush(QColor(150, 150, 255))
+        painter.drawEllipse(QPoint(int(x), int(y)), 8, 8)  # Handle
 
         # Draw the value inside the circular slider
         painter.setPen(QPen(QColor(150, 150, 255)))  # Black text color
-        # painter.setFont(self.font())  # Use the default font
         painter.setFont(QFont("Fira Code", 22))  # Use the default font
         
         
         ### draw value in the center of the circle
-        # painter.drawText(self.center.x() - 20, self.center.y() + 10, f"{int(self.value)}°")  # Draw the value
-        painter.drawText(self.center.x() - 5, self.center.y() + 10, f"{get_minutes_from_shutdown_time(self.value)}")  # Draw the value
+        painter.drawText(self.center.x() - 15, self.center.y() + 10, f"{get_minutes_from_shutdown_time(self.value)}")  # Draw the value
         
 
     def mousePressEvent(self, event):
