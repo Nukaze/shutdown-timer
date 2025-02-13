@@ -8,15 +8,16 @@ def calculate_seconds_shutdown_time(angle) -> int:
     # Get the slider value and map it to seconds
     # example: 45 degree = 15 minutes and modulo 60 to get the remainder seconds
     timer_seconds = ((angle * 60) // 6)
-    timer_mod = timer_seconds % 100
-    timer_seconds = timer_seconds - timer_mod
-    timer_seconds = [0, timer_seconds][timer_seconds > 0]
+    print(f"angle {angle}  || {timer_seconds} seconds")
     return int(timer_seconds)
 
-def convert_seconds_to_minutes(seconds) -> int:
-    hours, remainder = divmod(seconds, 3600)
+def convert_seconds_to_minutes(pure_seconds) -> int:
+    hours, remainder = divmod(pure_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
-    return int(minutes)
+    
+    pure_minutes = pure_seconds // 60
+    print(f"hours: {hours} || minutes: {minutes} || seconds: {seconds} || pure minutes: {pure_minutes}")
+    return int(pure_minutes)
 
 def get_minutes_from_shutdown_time(angle) -> int:
     return convert_seconds_to_minutes(calculate_seconds_shutdown_time(angle))    
@@ -29,24 +30,52 @@ class CircularSlider(QWidget):
         self.setWindowTitle("Circular Slider")
         self.setGeometry(0, 0, 400, 300)
 
-
         # Initialize Slider Variables
         self.value = 0  # Current slider value (0 to 360 degrees)
         self.radius = 80  # Adjusted radius of the circular slider
         self.center = QPoint(int(self.width() * .47), int(self.height() * .31))  # Center of the circle
         self.start_angle = 90  # The angle to start from (top)
+        self.total_angle = 0  # Total angle of the circular slider
 
+    def adaptive_color(self):
+        
+        def norm_angle_to_255(angle):
+            # Ensure angle is in the range 0-360
+            angle = angle % 360
+            # Linear mapping: 0 -> 0 and 360 -> 255
+            return int((angle / 360) * 255)
+                
+        # Set up the handler circle
+        # if self.total_angle > 360:
+        # For example, use the modulo of total_angle for a dynamic green component
+        # Clamp the extra value to a maximum of 255 for color components
+        # adap_extra = self.total_angle - 360
+        # green = min(255, int(adap_extra) % 256)
+        
+        # find normalized value of the total angle of the slider according to the range of 0-360 with 0-255
+        adap_extra = norm_angle_to_255(self.total_angle)
+        green = min(255, int(adap_extra) % 256)
+        adapted_color = QColor(150, green, 255)
+        
+        return adapted_color
+        
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Set up the background circle
-        painter.setPen(QPen(QColor(200, 200, 200), 10))  # Light gray background circle
+        bg_color = QColor(200, 200, 200)
+        handler_color = self.adaptive_color()
+        
+
+        # painter.setPen(QPen(QColor(200, 200, 200), 10))  # Light gray background circle
+        painter.setPen(QPen(bg_color, 10))  # Light gray background circle
         painter.drawEllipse(int(self.center.x() - self.radius), int(self.center.y() - self.radius),
                             int(2 * self.radius), int(2 * self.radius))
+        
+        
 
         # Draw the filled part based on value
-        painter.setPen(QPen(QColor(150, 150, 255), 10))  # Blue color for the filled part
+        painter.setPen(QPen(handler_color, 10))  # Blue color for the filled part
         painter.drawArc(QRect(int(self.center.x() - self.radius), int(self.center.y() - self.radius),
                               int(2 * self.radius), int(2 * self.radius)),
                          int(self.start_angle * 16), int(-self.value * 16))
@@ -55,20 +84,27 @@ class CircularSlider(QWidget):
         angle = (self.start_angle - self.value) * (math.pi / 180)  # Convert to radians
         x = self.center.x() + self.radius * math.cos(angle)
         y = self.center.y() - self.radius * math.sin(angle)
-        
+
+
         # Draw the handle point color
-        # painter.setBrush(QColor(255, 0, 0))
-        painter.drawEllipse(QPoint(int(x), int(y)), 10, 10)  # Handle
+        painter.setBrush(handler_color)
+        painter.drawEllipse(QPoint(int(x), int(y)), 8, 8)  # Handle
 
         # Draw the value inside the circular slider
         painter.setPen(QPen(QColor(150, 150, 255)))  # Black text color
-        # painter.setFont(self.font())  # Use the default font
         painter.setFont(QFont("Fira Code", 22))  # Use the default font
         
+        time_value = self.get_value()  # Get the current slider value
         
         ### draw value in the center of the circle
-        # painter.drawText(self.center.x() - 20, self.center.y() + 10, f"{int(self.value)}°")  # Draw the value
-        painter.drawText(self.center.x() - 5, self.center.y() + 10, f"{get_minutes_from_shutdown_time(self.value)}")  # Draw the value
+        painter.setFont(QFont("Fira Code", 30))  # Use the default font
+        painter.setPen(QPen(self.adaptive_color()))  # Black text color
+        rect = QRect(self.center.x() - 50, self.center.y() - 35, 100, 40)  # Define a rectangle for the text
+        painter.drawText(rect, Qt.AlignCenter, f"{get_minutes_from_shutdown_time(time_value)}")  # Draw the value
+        
+        painter.setPen(QPen(QColor(150, 150, 255)))  # Black text color
+        painter.setFont(QFont("Fira Code", 14))  # Use the default font
+        painter.drawText(self.center.x() - 35, self.center.y() + 30, f"Minutes")  # Draw the value
         
 
     def mousePressEvent(self, event):
@@ -91,13 +127,42 @@ class CircularSlider(QWidget):
 
         # Calculate the slider value (0-360) with smoother step by adjusting precision
         adjusted_angle = (angle + 90) % 360  # Adjusting angle to match top as starting point
+        
+        # detect direction of the rotation
+        diff = adjusted_angle - (self.total_angle % 360)
+        
+        handle_crossing_right = abs(angle) < 90
+        handle_crossing_left = not handle_crossing_right
+        
+        
+        # Handle boundary crossing (e.g., 350° → 10° should be +20, not -340)
+        if diff > 180:
+            diff -= 360
+        if diff < -180:
+            diff += 360
+        
+        # add the difference to the total angle    
+        self.total_angle += diff
+        
+        # assign final total value and prevent the total angle from going below 0 (negative)
+        self.total_angle = max(0, self.total_angle)
+            
+        # Ensure total_angle is within the correct range
         self.value = adjusted_angle
+        
+        
+        # print(f"adjusted angle: {int(adjusted_angle)} || total angle: {int(self.total_angle)} || angle: {int(angle)}")
+        
         self.update()  # Redraw the widget
 
     def get_value(self):
-        return self.value  # Return the current slider value
+        self.total_angle = int(self.total_angle)
+        return self.total_angle  # Return the current slider value
 
-
+    def reset_value(self):
+        self.value = 0
+        self.total_angle = 0
+        self.update()
 
 
 
@@ -164,12 +229,13 @@ class TimerApp(QWidget):
         if not self.is_running:
             # Get the slider value and map it to seconds
             slider_value = self.circular_slider.get_value()
+            print(f"Slider Value: {slider_value}")
             # example: 45 degree = 15 minutes and modulo 60 to get the remainder seconds
             self.timer_seconds = ((slider_value * 60) // 6)
             self.timer_mod = self.timer_seconds % 100
             self.timer_seconds = self.timer_seconds - self.timer_mod
             
-            self.timer_seconds = [0, self.timer_seconds][self.timer_seconds > 0]
+            self.timer_seconds = [10, self.timer_seconds][self.timer_seconds > 0]
 
             # Disable user input and adjust the start button state
             self.time_input.setDisabled(True)
@@ -177,9 +243,7 @@ class TimerApp(QWidget):
             self.start_button.setText("Timer Running...")
             self.is_running = True
 
-            # Start the countdown0
-            # self.countdown_timer.start(100)  # 1 second intervals
-            
+
             # disable start button when timer is running
             self.start_button.setDisabled(True)
             
@@ -215,6 +279,7 @@ class TimerApp(QWidget):
         self.time_input.clear()
         self.timer_display.setText("Time Left: 00:00:00")
         self.start_button.setText("Start Timer")
+        self.circular_slider.reset_value()
         
         # enable start button when timer is reset
         self.start_button.setDisabled(False)
