@@ -289,6 +289,8 @@ class TimerApp(QWidget):
         
 
 if __name__ == "__main__":
+    print("starting app\n\n")
     app = QApplication(sys.argv)
     window = TimerApp()
     sys.exit(app.exec_())
+    print("\n\napp is closed")
