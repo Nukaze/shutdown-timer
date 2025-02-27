@@ -1,0 +1,4 @@
+pyinstaller --onefile --name ShutdownTimer --windowed --clean --add-data "asset;asset" --icon=asset/icon/rest.png app.py
+
+
+https://www.youtube.com/watch?v=p3tSLatmGvU
