@@ -178,7 +178,7 @@ class TimerApp(QWidget):
         self.y = (self.screen.size().height() - self.height) * .4
         self.setGeometry(int(self.x), int(self.y), int(self.width), int(self.height))
         self.setFixedSize(self.width, self.height)
-        self.setWindowIcon(QIcon("asset/icon/sleep_score.svg"))
+        self.setWindowIcon(QIcon("asset/icon/rest.ico"))
     
 
         # Create UI Elements
