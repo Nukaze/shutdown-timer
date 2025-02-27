@@ -36,6 +36,10 @@ class CircularSlider(QWidget):
         self.center = QPoint(int(self.width() * .47), int(self.height() * .31))  # Center of the circle
         self.start_angle = 90  # The angle to start from (top)
         self.total_angle = 0  # Total angle of the circular slider
+        root_path = os.getcwd()
+        icon_path = os.path.join(root_path, "asset\\icon\\rest.ico")
+        print(icon_path)
+        self.setWindowIcon(QIcon(icon_path))
 
     def adaptive_color(self):
         
@@ -178,7 +182,10 @@ class TimerApp(QWidget):
         self.y = (self.screen.size().height() - self.height) * .4
         self.setGeometry(int(self.x), int(self.y), int(self.width), int(self.height))
         self.setFixedSize(self.width, self.height)
-        self.setWindowIcon(QIcon("asset/icon/rest.ico"))
+        root_path = os.getcwd()
+        icon_path = os.path.join(root_path, "asset\\icon\\rest.ico")
+        print(icon_path)
+        self.setWindowIcon(QIcon(icon_path))
     
 
         # Create UI Elements
