@@ -31,11 +31,12 @@ class CircularSlider(QWidget):
         self.setGeometry(0, 0, 400, 300)
 
         # Initialize Slider Variables
-        self.value = 0  # Current slider value (0 to 360 degrees)
-        self.radius = 80  # Adjusted radius of the circular slider
-        self.center = QPoint(int(self.width() * .47), int(self.height() * .31))  # Center of the circle
-        self.start_angle = 90  # The angle to start from (top)
-        self.total_angle = 0  # Total angle of the circular slider
+        self.value = 0         # Current slider value (0 to 360 degrees)
+        self.radius = 80        # Adjusted radius of the circular slider
+        self.center = QPoint(int(self.width() * .47), int(self.height() * .31))     # Center of the circle
+        self.start_angle = 90       # The angle to start from (top)
+        self.total_angle = 0        # Total angle of the circular slider
+        self.display_minute = None      # Display the minutes value
         root_path = os.getcwd()
         icon_path = os.path.join(root_path, "asset\\icon\\rest.ico")
         print(icon_path)
@@ -100,11 +101,21 @@ class CircularSlider(QWidget):
         
         time_value = self.get_value()  # Get the current slider value
         
+        if self.display_minute:
+            minute_to_display = self.display_minute
+        else:
+            minute_to_display = get_minutes_from_shutdown_time(time_value)
+             
+        
+        
         ### draw value in the center of the circle
         painter.setFont(QFont("Fira Code", 30))  # Use the default font
         painter.setPen(QPen(self.adaptive_color()))  # Black text color
         rect = QRect(self.center.x() - 50, self.center.y() - 35, 100, 40)  # Define a rectangle for the text
-        painter.drawText(rect, Qt.AlignCenter, f"{get_minutes_from_shutdown_time(time_value)}")  # Draw the value
+        
+        
+        ### Minutes value timer display
+        painter.drawText(rect, Qt.AlignCenter, f"{minute_to_display}")  # Draw the minutes value
         
         painter.setPen(QPen(QColor(150, 150, 255)))  # Black text color
         painter.setFont(QFont("Fira Code", 14))  # Use the default font
@@ -249,6 +260,9 @@ class TimerApp(QWidget):
             self.circular_slider.setDisabled(True)
             self.start_button.setText("Timer Running...")
             self.is_running = True
+            
+            # Start the countdown timer
+            self.countdown_timer.start(1000)
 
 
             # disable start button when timer is running
@@ -270,6 +284,9 @@ class TimerApp(QWidget):
             minutes, seconds = divmod(remainder, 60)
             self.timer_display.setText(f"Time Left: {hours:02}h:{minutes:02}m:{seconds:02}s")
         
+            self.circular_slider.display_minute = convert_seconds_to_minutes(self.timer_seconds)
+            self.circular_slider.update()
+
         # when timer is up
         else:
             self.countdown_timer.stop()
@@ -287,6 +304,8 @@ class TimerApp(QWidget):
         self.timer_display.setText("Time Left: 00:00:00")
         self.start_button.setText("Start Timer")
         self.circular_slider.reset_value()
+        self.circular_slider.display_minute = None
+        self.circular_slider.update()
         
         # enable start button when timer is reset
         self.start_button.setDisabled(False)
