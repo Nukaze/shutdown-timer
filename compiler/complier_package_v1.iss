@@ -2,18 +2,22 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Shutdown Timer"
-#define MyAppVersion "0.1"
+#define MyAppVersion "1.0"
 #define MyAppPublisher "Nukaze"
+#define MyAppURL "https://github.com/Nukaze/shutdown-timer"
 #define MyAppExeName "ShutdownTimer.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{604B867D-4E5C-49DE-9505-F39F719EEF67}
+AppId={{36FAC1E9-DFD2-4853-967F-E7DA1C32921C}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
+AppPublisherURL={#MyAppURL}
+AppSupportURL={#MyAppURL}
+AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\Shutdown_Timer
 UninstallDisplayIcon={app}\{#MyAppExeName}
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
@@ -26,13 +30,11 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 LicenseFile=C:\GitHubRepo\shutdown-timer\LICENSE
-InfoBeforeFile=
-InfoAfterFile=
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=C:\GitHubRepo\shutdown-timer
-OutputBaseFilename=ShutdownTimer_WINDOWS_setup
+OutputBaseFilename=Shutdown_Timer_WINDOWS_setup_v1
 SetupIconFile=C:\GitHubRepo\shutdown-timer\asset\setup.ico
 SolidCompression=yes
 WizardStyle=modern
