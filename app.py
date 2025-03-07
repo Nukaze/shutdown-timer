@@ -223,20 +223,32 @@ class TimerApp(QWidget):
         self.layout.addWidget(self.time_input)
         # Add a spacer to create some space between the input and the circular slider
         self.layout.addSpacing(20)
+        
+        
+        self.button_container = QWidget()
+        self.button_layout = QVBoxLayout()
+        self.button_layout.setAlignment(Qt.AlignCenter)
+        self.button_layout.setSpacing(10)
 
 
         # Start and Reset buttons
         self.start_button = QPushButton("Start Timer", self)
         self.start_button.clicked.connect(self.start_timer)
+        self.start_button.setFixedWidth(240)
+        self.start_button.setFixedHeight(60)
+        self.start_button.setStyleSheet("background-color: #7631f7; color: white; font-size: 20px")
         self.layout.addWidget(self.start_button)
+ 
 
         self.reset_button = QPushButton("Reset Timer", self)
         self.reset_button.clicked.connect(self.reset_timer)
+        self.reset_button.setFixedWidth(240)
+        self.reset_button.setFixedHeight(60)
+        self.reset_button.setStyleSheet("background-color: #454545; color: white; font-size: 20px")
         self.layout.addWidget(self.reset_button)
 
-        # Countdown Display
-        self.timer_display = QLabel("Time Left: 00:00:00", self)
-        self.layout.addWidget(self.timer_display)
+
+        
 
         # Set up a timer for countdown
         self.countdown_timer = QTimer(self)
@@ -290,7 +302,6 @@ class TimerApp(QWidget):
             self.timer_seconds -= 1
             hours, remainder = divmod(self.timer_seconds, 3600)
             minutes, seconds = divmod(remainder, 60)
-            self.timer_display.setText(f"Time Left: {hours:02}h:{minutes:02}m:{seconds:02}s")
         
             self.circular_slider.display_minute = convert_seconds_to_minutes(self.timer_seconds)
             self.circular_slider.update()
@@ -298,7 +309,6 @@ class TimerApp(QWidget):
         # when timer is up
         else:
             self.countdown_timer.stop()
-            self.timer_display.setText("Time's up!")
             self.start_button.setText("Start Timer")
             self.reset_timer()
 
@@ -309,7 +319,6 @@ class TimerApp(QWidget):
         self.time_input.setEnabled(True)
         self.circular_slider.setEnabled(True)
         self.time_input.clear()
-        self.timer_display.setText("Time Left: 00:00:00")
         self.start_button.setText("Start Timer")
         self.circular_slider.reset_value()
         self.circular_slider.display_minute = None
