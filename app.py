@@ -1,7 +1,7 @@
 import sys, os
 import math
 from PyQt5.QtCore import Qt, QTimer, QRect, QPoint, QSize
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMainWindow
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QIcon, QMovie
 
 def calculate_seconds_shutdown_time(angle) -> int:
@@ -200,8 +200,10 @@ class CircularSlider(QWidget):
 class TimerApp(QWidget):
     def __init__(self, use_gif: bool):
         super().__init__()
-
+        self.setStyleSheet("background-color: #232323")
         self.setWindowTitle("Shutdown Timer")
+
+
         self.screen = QApplication.primaryScreen()
         self.app_width, self.app_height = 300, 400
         # set initial window size to middle of the screen x, y
@@ -211,10 +213,13 @@ class TimerApp(QWidget):
         self.setGeometry(int(self.x), int(self.y), int(self.app_width), int(self.app_height))
         self.setFixedSize(self.app_width, self.app_height)
         
+        
         root_path = os.getcwd()
         icon_path = os.path.join(root_path, "asset\\icon\\rest.ico")
         print(icon_path)
-        self.setWindowIcon(QIcon(icon_path))    
+        self.setWindowIcon(QIcon(icon_path))
+        
+        self.use_gif = use_gif
 
         # Create UI Elements
         self.global_layout = QVBoxLayout()
@@ -225,16 +230,15 @@ class TimerApp(QWidget):
         self.circular_slider = CircularSlider()
         self.global_layout.addWidget(self.circular_slider)
         
-        if use_gif:
-            try:
-                self.gif_label = QLabel(self)
-                self.movie = QMovie("asset/hg.gif")
-                self.movie.setScaledSize(QSize(50, 50))
-                self.gif_label.setMovie(self.movie)
-                self.gif_label.setGeometry(int(self.app_width * .42), int(self.app_height * .47), 100, 100)
-            except:
-                pass
-        
+        try:
+            self.gif_label = QLabel(self)
+            self.movie = QMovie("asset/hg.gif")
+            self.movie.setScaledSize(QSize(50, 50))
+            self.gif_label.setMovie(self.movie)
+            self.gif_label.setGeometry(int(self.app_width * .42), int(self.app_height * .47), 100, 100)
+        except:
+            pass
+    
         
         self.button_container = QWidget()
         self.button_layout = QVBoxLayout()
@@ -248,7 +252,7 @@ class TimerApp(QWidget):
         self.start_button.clicked.connect(self.start_timer)
         self.start_button.setFixedWidth(int(self.app_width * .935))
         self.start_button.setFixedHeight(60)
-        self.start_button.setStyleSheet("background-color: #7631f7; color: white; font-size: 20px")
+        self.start_button.setStyleSheet("background-color: #9600FF; color: white; font-size: 20px")
         self.global_layout.addWidget(self.start_button)
  
 
@@ -256,7 +260,7 @@ class TimerApp(QWidget):
         self.reset_button.clicked.connect(self.reset_timer)
         self.reset_button.setFixedWidth(int(self.app_width * .935))
         self.reset_button.setFixedHeight(60)
-        self.reset_button.setStyleSheet("background-color: #454545; color: white; font-size: 20px")
+        self.reset_button.setStyleSheet("background-color: #696969; color: white; font-size: 20px")
         self.global_layout.addWidget(self.reset_button)
 
 
@@ -277,7 +281,8 @@ class TimerApp(QWidget):
 
     def start_timer(self):
         if not self.is_running:
-            self.show_gif()
+            if self.use_gif:
+                self.show_gif()
             self.start_button.setText("⏳")
             # Get the slider value and map it to seconds
             slider_value = self.circular_slider.get_value()
@@ -342,7 +347,8 @@ class TimerApp(QWidget):
         self.circular_slider.display_minute = None
         self.circular_slider.update()
         
-        self.hide_gif()
+        if self.use_gif:
+            self.hide_gif()
         # enable start button when timer is reset
         self.start_button.setDisabled(False)
         
