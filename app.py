@@ -8,7 +8,7 @@ def calculate_seconds_shutdown_time(angle) -> int:
     # Get the slider value and map it to seconds
     # example: 45 degree = 15 minutes and modulo 60 to get the remainder seconds
     timer_seconds = ((angle * 60) // 6)
-    print(f"angle {angle}  || {timer_seconds} seconds")
+    # print(f"angle {angle}  || {timer_seconds} seconds", end="\r")
     return int(timer_seconds)
 
 def convert_seconds_to_minutes(pure_seconds) -> int:
@@ -16,12 +16,20 @@ def convert_seconds_to_minutes(pure_seconds) -> int:
     minutes, seconds = divmod(remainder, 60)
     
     pure_minutes = pure_seconds // 60
-    print(f"hours: {hours} || minutes: {minutes} || seconds: {seconds} || pure minutes: {pure_minutes}")
+    print(f"hours: {hours} || minutes: {minutes} || seconds: {seconds} || pure minutes: {pure_minutes}", end="\r")
+    
+    # 30 days in minutes
+    min_minute = 0
+    max_minute = 43800 
+    pure_minutes = limite_time_in_range(pure_minutes, min_minute, max_minute)
+    
     return int(pure_minutes)
 
 def get_minutes_from_shutdown_time(angle) -> int:
     return convert_seconds_to_minutes(calculate_seconds_shutdown_time(angle))    
 
+def limite_time_in_range(value, start=0, end=43800):
+    return max(start, min(value, end))
 
 class CircularSlider(QWidget):
     def __init__(self):
